@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СкладПро — Учёт товара на складе</title>
+    <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@5.0.0/index.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); position: relative; overflow: hidden; }
+        .auth-bg-shapes { position: absolute; inset: 0; overflow: hidden; }
+        .auth-bg-shapes div { position: absolute; border-radius: 50%; opacity: 0.05; background: #fff; }
+        .auth-bg-shapes .shape1 { width: 600px; height: 600px; top: -200px; right: -100px; }
+        .auth-bg-shapes .shape2 { width: 400px; height: 400px; bottom: -100px; left: -50px; }
+        .auth-bg-shapes .shape3 { width: 200px; height: 200px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .auth-box { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 24px; padding: 48px 40px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); position: relative; z-index: 1; animation: authFadeIn 0.5s ease; }
+        @keyframes authFadeIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .auth-header { text-align: center; margin-bottom: 32px; }
+        .auth-logo { width: 64px; height: 64px; background: linear-gradient(135deg, #4facfe, #00f2fe); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; margin: 0 auto 16px; box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4); }
+        .auth-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .auth-subtitle { font-size: 14px; color: #6b7280; }
+        .auth-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; margin-bottom: 28px; }
+        .auth-tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; color: #6b7280; }
+        .auth-tab.active { background: #fff; color: #1a1a2e; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; animation: formSlideIn 0.3s ease; }
+        @keyframes formSlideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+        .form-input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; outline: none; transition: all 0.2s; font-family: 'Inter', sans-serif; background: #fff; }
+        .form-input:focus { border-color: #4facfe; box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1); }
+        .form-input.error { border-color: #ef4444; }
+        .error-msg { font-size: 12px; color: #ef4444; margin-top: 6px; display: none; }
+        .error-msg.show { display: block; }
+        .auth-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #4facfe, #00c6fe); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; margin-top: 8px; }
+        .auth-btn:hover { box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4); transform: translateY(-2px); }
+        .auth-btn:active { transform: translateY(0); }
+        .auth-footer { text-align: center; margin-top: 24px; font-size: 13px; color: #6b7280; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); color: #fff; z-index: 100; transition: transform 0.3s; }
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 12px; }
+        .sidebar-logo { width: 42px; height: 42px; background: linear-gradient(135deg, #4facfe, #00f2fe); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .sidebar-title { font-size: 18px; font-weight: 700; }
+        .sidebar-subtitle { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+        .sidebar-nav { padding: 16px 12px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; font-size: 14px; font-weight: 500; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.08); }
+        .nav-item.active { background: rgba(79, 172, 254, 0.2); color: #4facfe; }
+        .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+        .sidebar-user { padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: auto; position: absolute; bottom: 0; left: 0; right: 0; }
+        .sidebar-user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .sidebar-user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #4facfe, #00f2fe); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+        .sidebar-user-name { font-weight: 600; font-size: 14px; }
+        .sidebar-user-email { font-size: 11px; opacity: 0.6; }
+        .sidebar-logout { width: 100%; padding: 10px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        .sidebar-logout:hover { background: rgba(239, 68, 68, 0.2); }
+        .main-content { margin-left: 260px; min-height: 100vh; }
+        .topbar { background: #fff; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 50; }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .menu-toggle { display: none; background: none; border: none; font-size: 20px; cursor: pointer; color: #1a1a2e; }
+        .page-title { font-size: 22px; font-weight: 700; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .search-box { position: relative; }
+        .search-box input { padding: 10px 16px 10px 40px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 14px; width: 280px; outline: none; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        .search-box input:focus { border-color: #4facfe; box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.15); }
+        .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 14px; }
+        .user-avatar-top { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #4facfe, #00f2fe); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .content-area { padding: 32px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+        .stat-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
+        .stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .stat-icon.blue { background: rgba(79, 172, 254, 0.12); color: #4facfe; }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .stat-icon.red { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+        .stat-change { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 6px; }
+        .stat-change.up { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .stat-change.down { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .stat-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .stat-label { font-size: 13px; color: #6b7280; font-weight: 500; }
+        .card { background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); margin-bottom: 24px; }
+        .card-header { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .card-title { font-size: 17px; font-weight: 700; }
+        .btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; }
+        .btn-primary { background: linear-gradient(135deg, #4facfe, #00c6fe); color: #fff; }
+        .btn-primary:hover { box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4); transform: translateY(-1px); }
+        .btn-secondary { background: #f0f2f5; color: #1a1a2e; }
+        .btn-secondary:hover { background: #e4e6e9; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .btn-danger:hover { box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+        .btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 8px; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 14px 20px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f0f0f0; background: #fafafa; white-space: nowrap; }
+        td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid #f5f5f5; white-space: nowrap; }
+        tr:hover td { background: #f8faff; }
+        .product-cell { display: flex; align-items: center; gap: 12px; }
+        .product-avatar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #fff; }
+        .product-name { font-weight: 600; }
+        .product-sku { font-size: 12px; color: #9ca3af; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .actions-cell { display: flex; gap: 8px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal { background: #fff; border-radius: 20px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; transform: translateY(20px) scale(0.95); transition: transform 0.3s; }
+        .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+        .modal-header { padding: 24px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-size: 20px; font-weight: 700; }
+        .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af; transition: all 0.2s; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { background: #f0f0f0; color: #1a1a2e; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 0 24px 24px; display: flex; gap: 12px; justify-content: flex-end; }
+        .notification { position: fixed; top: 24px; right: 24px; z-index: 300; padding: 16px 24px; border-radius: 12px; color: #fff; font-weight: 600; font-size: 14px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .notification.info { background: linear-gradient(135deg, #4facfe, #00c6fe); }
+        .filter-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .filter-select { padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; cursor: pointer; background: #fff; }
+        .filter-select:focus { border-color: #4facfe; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 200px; padding-top: 20px; padding: 24px; }
+        .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .bar { width: 100%; max-width: 60px; border-radius: 8px 8px 0 0; transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; cursor: pointer; }
+        .bar:hover { opacity: 0.85; }
+        .bar-label { font-size: 11px; color: #6b7280; font-weight: 500; text-align: center; }
+        .bar-value { font-size: 12px; font-weight: 700; color: #374151; }
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; padding: 24px; }
+        .category-item { background: #fafafa; border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s; cursor: pointer; }
+        .category-item:hover { background: #f0f7ff; transform: translateY(-2px); }
+        .category-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 12px; }
+        .category-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .category-count { font-size: 12px; color: #6b7280; }
+        .recent-activity { padding: 0 24px 24px; }
+        .activity-item { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f5f5f5; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .activity-dot.add { background: #10b981; }
+        .activity-dot.edit { background: #4facfe; }
+        .activity-dot.delete { background: #ef4444; }
+        .activity-text { font-size: 13px; color: #374151; flex: 1; }
+        .activity-text strong { font-weight: 600; }
+        .activity-time { font-size: 11px; color: #9ca3af; white-space: nowrap; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 99; }
+        .sidebar-overlay.open { display: block; }
+        .warehouse-visual { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; padding: 24px; }
+        .shelf { aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .shelf:hover { transform: scale(1.05); }
+        .shelf.low { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .shelf.medium { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .shelf.high { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .shelf.empty { background: rgba(156,163,175,0.1); border-color: rgba(156,163,175,0.15); color: #9ca3af; }
+        .profile-card { background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); padding: 32px; margin-bottom: 24px; }
+        .profile-header { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #4facfe, #00f2fe); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #fff; }
+        .profile-name { font-size: 24px; font-weight: 700; }
+        .profile-email { color: #6b7280; margin-top: 4px; }
+        .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+        .profile-stat { background: #f8f9fa; border-radius: 12px; padding: 20px; text-align: center; }
+        .profile-stat-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .profile-stat-label { font-size: 13px; color: #6b7280; }
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s ease forwards; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .menu-toggle { display: block; }
+            .search-box input { width: 180px; }
+            .content-area { padding: 20px 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .form-row { grid-template-columns: 1fr; }
+            .profile-stats { grid-template-columns: 1fr; }
+            .profile-header { flex-direction: column; text-align: center; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .search-box { display: none; }
+            .auth-box { padding: 32px 24px; }
+        }
+        .password-toggle { position: relative; }
+        .password-toggle i { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #aaa; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="notificationContainer"></div>
+
+    <div id="authScreen" class="auth-container">
+        <div class="auth-bg-shapes">
+            <div class="shape1"></div>
+            <div class="shape2"></div>
+            <div class="shape3"></div>
+        </div>
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="auth-logo"><i class="fas fa-warehouse"></i></div>
+                <h1 class="auth-title">СкладПро</h1>
+                <p class="auth-subtitle">Система управления складом</p>
+            </div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">Вход</div>
+                <div class="auth-tab" data-tab="register">Регистрация</div>
+            </div>
+            <form id="loginForm" class="auth-form active">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="example@mail.com" required>
+                    <div class="error-msg" id="loginEmailError">Введите корректный email</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <div class="password-toggle">
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Введите пароль" required>
+                        <i class="fas fa-eye" onclick="togglePassword('loginPassword', this)"></i>
+                    </div>
+                    <div class="error-msg" id="loginPasswordError">Неверный пароль</div>
+                </div>
+                <button type="submit" class="auth-btn">Войти в систему</button>
+            </form>
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Имя</label>
+                    <input type="text" id="registerName" class="form-input" placeholder="Ваше имя" required>
+                    <div class="error-msg" id="registerNameError">Имя должно содержать минимум 2 символа</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="example@mail.com" required>
+                    <div class="error-msg" id="registerEmailError">Этот email уже зарегистрирован</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <div class="password-toggle">
+                        <input type="password" id="registerPassword" class="form-input" placeholder="Минимум 6 символов" required>
+                        <i class="fas fa-eye" onclick="togglePassword('registerPassword', this)"></i>
+                    </div>
+                    <div class="error-msg" id="registerPasswordError">Пароль должен содержать минимум 6 символов</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Повторите пароль</label>
+                    <input type="password" id="registerConfirm" class="form-input" placeholder="Повторите пароль" required>
+                    <div class="error-msg" id="registerConfirmError">Пароли не совпадают</div>
+                </div>
+                <button type="submit" class="auth-btn">Создать аккаунт</button>
+            </form>
+            <div class="auth-footer">
+                <p>Зарегистрируйтесь или войдите для начала работы</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="appScreen" class="hidden">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo"><i class="fas fa-warehouse"></i></div>
+                <div>
+                    <div class="sidebar-title">СкладПро</div>
+                    <div class="sidebar-subtitle">Система управления складом</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-page="dashboard"><i class="fas fa-chart-pie"></i> Дашборд</div>
+                <div class="nav-item" data-page="products"><i class="fas fa-boxes-stacked"></i> Товары</div>
+                <div class="nav-item" data-page="warehouse"><i class="fas fa-building"></i> Склад</div>
+                <div class="nav-item" data-page="analytics"><i class="fas fa-chart-line"></i> Аналитика</div>
+                <div class="nav-item" data-page="profile"><i class="fas fa-user"></i> Профиль</div>
+            </nav>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-avatar" id="sidebarAvatar">А</div>
+                    <div>
+                        <div class="sidebar-user-name" id="sidebarName">Админ</div>
+                        <div class="sidebar-user-email" id="sidebarEmail">admin@demo.com</div>
+                    </div>
+                </div>
+                <button class="sidebar-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            </div>
+        </aside>
+        <div class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title" id="pageTitle">Дашборд</h1>
+                </div>
+                <div class="topbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="globalSearch" placeholder="Поиск товаров...">
+                    </div>
+                    <div class="user-avatar-top" id="topAvatar">А</div>
+                </div>
+            </header>
+            <div class="content-area" id="contentArea">
+                <div id="dashboardPage" class="page-content animate-in"></div>
+                <div id="productsPage" class="page-content hidden"></div>
+                <div id="warehousePage" class="page-content hidden"></div>
+                <div id="analyticsPage" class="page-content hidden"></div>
+                <div id="profilePage" class="page-content hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="productModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Добавить товар</h2>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productForm">
+                <div class="modal-body">
+                    <input type="hidden" id="productId">
+                    <div class="form-group">
+                        <label class="form-label">Название товара</label>
+                        <input type="text" id="productName" class="form-input" placeholder="Введите название" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Категория</label>
+                            <select id="productCategory" class="form-input" required>
+                                <option value="">Выберите</option>
+                                <option value="Электроника">Электроника</option>
+                                <option value="Одежда">Одежда</option>
+                                <option value="Продукты">Продукты</option>
+                                <option value="Мебель">Мебель</option>
+                                <option value="Инструменты">Инструменты</option>
+                                <option value="Другое">Другое</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Количество</label>
+                            <input type="number" id="productQuantity" class="form-input" placeholder="0" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Цена (₽)</label>
+                            <input type="number" id="productPrice" class="form-input" placeholder="0.00" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ячейка</label>
+                            <input type="text" id="productCell" class="form-input" placeholder="A-01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Описание</label>
+                        <input type="text" id="productDesc" class="form-input" placeholder="Краткое описание">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        let currentUser = null;
+        let products = [];
+        let activities = [];
+        let token = localStorage.getItem('skladpro_token');
+        const colors = ['#4facfe', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers.Authorization = 'Bearer ' + token;
+            const options = { method, headers };
+            if (body) options.body = JSON.stringify(body);
+            const res = await fetch(API + endpoint, options);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: 'Ошибка сети' }));
+                throw new Error(err.error || 'Ошибка запроса');
+            }
+            return res.json();
+        }
+
+        async function init() {
+            setupAuthTabs();
+            setupLoginForm();
+            setupRegisterForm();
+            setupNavigation();
+            setupSearch();
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+            if (token) {
+                try {
+                    products = await apiCall('/products');
+                    activities = await apiCall('/activities');
+                    currentUser = JSON.parse(atob(token.split('.')[1]));
+                    showApp();
+                } catch {
+                    token = null;
+                    localStorage.removeItem('skladpro_token');
+                    showAuth();
+                }
+            } else {
+                showAuth();
+            }
+        }
+
+        function setupAuthTabs() {
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
+                    clearErrors();
+                });
+            });
+        }
+
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); } 
+            else { input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+            document.querySelectorAll('.form-input').forEach(e => e.classList.remove('error'));
+        }
+
+        function showError(inputId, msgId) {
+            document.getElementById(inputId).classList.add('error');
+            document.getElementById(msgId).classList.add('show');
+        }
+
+        function setupLoginForm() {
+            document.getElementById('loginForm').addEventListener('submit', async e => {
+                e.preventDefault();
+                clearErrors();
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                if (!email || !email.includes('@')) { showError('loginEmail', 'loginEmailError'); return; }
+                try {
+                    const data = await apiCall('/auth/login', 'POST', { email, password });
+                    token = data.token;
+                    localStorage.setItem('skladpro_token', token);
+                    currentUser = data.user;
+                    products = await apiCall('/products');
+                    activities = await apiCall('/activities');
+                    showApp();
+                    notify('Добро пожаловать, ' + currentUser.name + '!', 'success');
+                } catch (err) {
+                    showError('loginPassword', 'loginPasswordError');
+                    document.getElementById('loginPasswordError').textContent = err.message;
+                }
+            });
+        }
+
+        function setupRegisterForm() {
+            document.getElementById('registerForm').addEventListener('submit', async e => {
+                e.preventDefault();
+                clearErrors();
+                const name = document.getElementById('registerName').value.trim();
+                const email = document.getElementById('registerEmail').value.trim();
+                const password = document.getElementById('registerPassword').value;
+                const confirm = document.getElementById('registerConfirm').value;
+                let valid = true;
+                if (name.length < 2) { showError('registerName', 'registerNameError'); valid = false; }
+                if (!email || !email.includes('@')) { showError('registerEmail', 'registerEmailError'); document.getElementById('registerEmailError').textContent = 'Введите корректный email'; valid = false; }
+                if (password.length < 6) { showError('registerPassword', 'registerPasswordError'); valid = false; }
+                if (password !== confirm) { showError('registerConfirm', 'registerConfirmError'); valid = false; }
+                if (!valid) return;
+                try {
+                    const data = await apiCall('/auth/register', 'POST', { name, email, password });
+                    token = data.token;
+                    localStorage.setItem('skladpro_token', token);
+                    currentUser = data.user;
+                    products = [];
+                    activities = [];
+                    showApp();
+                    notify('Аккаунт создан! Добро пожаловать, ' + name + '!', 'success');
+                } catch (err) {
+                    if (err.message.includes('Email')) { showError('registerEmail', 'registerEmailError'); }
+                    notify(err.message, 'error');
+                }
+            });
+        }
+
+        function showAuth() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('appScreen').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            updateUserUI();
+            navigateTo('dashboard');
+        }
+
+        function logout() {
+            currentUser = null;
+            products = [];
+            activities = [];
+            token = null;
+            localStorage.removeItem('skladpro_token');
+            showAuth();
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            notify('Вы вышли из системы', 'info');
+        }
+
+        function updateUserUI() {
+            if (!currentUser) return;
+            const initial = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('sidebarAvatar').textContent = initial;
+            document.getElementById('sidebarName').textContent = currentUser.name;
+            document.getElementById('sidebarEmail').textContent = currentUser.email;
+            document.getElementById('topAvatar').textContent = initial;
+        }
+
+        function notify(message, type) {
+            const container = document.getElementById('notificationContainer');
+            const div = document.createElement('div');
+            div.className = 'notification ' + type;
+            const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
+            div.innerHTML = '<i class="fas fa-' + icon + '"></i> ' + message;
+            container.appendChild(div);
+            setTimeout(() => div.classList.add('show'), 10);
+            setTimeout(() => { div.classList.remove('show'); setTimeout(() => div.remove(), 400); }, 3000);
+        }
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+                item.addEventListener('click', () => { navigateTo(item.dataset.page); closeSidebar(); });
+            });
+        }
+
+        function navigateTo(page) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector('.nav-item[data-page="' + page + '"]')?.classList.add('active');
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(page + 'Page').classList.remove('hidden');
+            document.getElementById(page + 'Page').classList.add('animate-in');
+            const titles = { dashboard: 'Дашборд', products: 'Товары', warehouse: 'Склад', analytics: 'Аналитика', profile: 'Профиль' };
+            document.getElementById('pageTitle').textContent = titles[page];
+            const renderers = { dashboard: renderDashboard, products: renderProducts, warehouse: renderWarehouse, analytics: renderAnalytics, profile: renderProfile };
+            if (renderers[page]) renderers[page]();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
+        function setupSearch() {
+            document.getElementById('globalSearch').addEventListener('input', e => {
+                const q = e.target.value.toLowerCase();
+                const items = document.querySelectorAll('.product-row');
+                items.forEach(row => {
+                    const name = row.querySelector('.product-name')?.textContent.toLowerCase() || '';
+                    const sku = row.querySelector('.product-sku')?.textContent.toLowerCase() || '';
+                    row.style.display = (name.includes(q) || sku.includes(q)) ? '' : 'none';
+                });
+            });
+        }
+
+        function renderDashboard() {
+            const totalProducts = products.length;
+            const totalQuantity = products.reduce((sum, p) => sum + p.quantity, 0);
+            const totalValue = products.reduce((sum, p) => sum + (p.quantity * p.price), 0);
+            const lowStock = products.filter(p => p.quantity > 0 && p.quantity <= 10).length;
+            const container = document.getElementById('dashboardPage');
+            container.innerHTML = '<div class="stats-grid">' + '<div class="stat-card"><div class="stat-header"><div class="stat-icon blue"><i class="fas fa-box"></i></div><span class="stat-change up">+12%</span></div><div class="stat-value">' + totalProducts + '</div><div class="stat-label">Всего товаров</div></div>' + '<div class="stat-card"><div class="stat-header"><div class="stat-icon green"><i class="fas fa-cubes"></i></div><span class="stat-change up">+8%</span></div><div class="stat-value">' + totalQuantity + '</div><div class="stat-label">Единиц на складе</div></div>' + '<div class="stat-card"><div class="stat-header"><div class="stat-icon orange"><i class="fas fa-ruble-sign"></i></div><span class="stat-change up">+15%</span></div><div class="stat-value">' + formatPrice(totalValue) + '</div><div class="stat-label">Общая стоимость</div></div>' + '<div class="stat-card"><div class="stat-header"><div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div><span class="stat-change down">Внимание</span></div><div class="stat-value">' + lowStock + '</div><div class="stat-label">Товаров заканчивается</div></div></div>' + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">' + '<div class="card"><div class="card-header"><h3 class="card-title">Последние действия</h3></div><div class="recent-activity">' + renderActivities() + '</div></div>' + '<div class="card"><div class="card-header"><h3 class="card-title">Категории товаров</h3></div><div class="category-grid">' + renderCategories() + '</div></div></div>';
+        }
+
+        function renderActivities() {
+            if (!activities.length) return '<div style="padding:24px;text-align:center;color:#9ca3af"><i class="fas fa-history" style="font-size:32px;margin-bottom:12px;display:block"></i>Нет действий</div>';
+            return activities.slice(0, 8).map(a => {
+                const time = timeAgo(a.time);
+                return '<div class="activity-item"><div class="activity-dot ' + a.type + '"></div><div class="activity-text">' + a.text + '</div><div class="activity-time">' + time + '</div></div>';
+            }).join('');
+        }
+
+        function renderCategories() {
+            const cats = {};
+            products.forEach(p => { cats[p.category] = (cats[p.category] || 0) + 1; });
+            const catColors = { 'Электроника': 'rgba(79,172,254,0.15)', 'Одежда': 'rgba(236,72,153,0.15)', 'Продукты': 'rgba(16,185,129,0.15)', 'Мебель': 'rgba(245,158,11,0.15)', 'Инструменты': 'rgba(139,92,246,0.15)', 'Другое': 'rgba(6,182,212,0.15)' };
+            const catIcons = { 'Электроника': 'fa-microchip', 'Одежда': 'fa-shirt', 'Продукты': 'fa-utensils', 'Мебель': 'fa-couch', 'Инструменты': 'fa-wrench', 'Другое': 'fa-box' };
+            let html = '';
+            for (const [cat, count] of Object.entries(cats)) {
+                html += '<div class="category-item"><div class="category-icon" style="background:' + (catColors[cat] || catColors['Другое']) + ';color:#1a1a2e"><i class="fas ' + (catIcons[cat] || catIcons['Другое']) + '"></i></div><div class="category-name">' + cat + '</div><div class="category-count">' + count + ' товаров</div></div>';
+            }
+            return html || '<div style="padding:24px;text-align:center;color:#9ca3af">Нет категорий</div>';
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('productsPage');
+            container.innerHTML = '<div class="card"><div class="card-header"><h3 class="card-title">Список товаров</h3><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div class="filter-bar"><select class="filter-select" id="filterCategory"><option value="">Все категории</option><option value="Электроника">Электроника</option><option value="Одежда">Одежда</option><option value="Продукты">Продукты</option><option value="Мебель">Мебель</option><option value="Инструменты">Инструменты</option><option value="Другое">Другое</option></select><select class="filter-select" id="filterStock"><option value="">Все</option><option value="in-stock">В наличии</option><option value="low-stock">Заканчивается</option><option value="out">Нет в наличии</option></select></div><button class="btn btn-primary" onclick="openProductModal()"><i class="fas fa-plus"></i> Добавить</button></div></div><div class="table-wrapper"><table><thead><tr><th>Товар</th><th>Категория</th><th>Количество</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead><tbody id="productsTable"></tbody></table></div></div>';
+            document.getElementById('filterCategory').addEventListener('change', filterProducts);
+            document.getElementById('filterStock').addEventListener('change', filterProducts);
+            filterProducts();
+        }
+
+        function filterProducts() {
+            const catFilter = document.getElementById('filterCategory')?.value || '';
+            const stockFilter = document.getElementById('filterStock')?.value || '';
+            const tbody = document.getElementById('productsTable');
+            if (!tbody) return;
+            let filtered = [...products];
+            if (catFilter) filtered = filtered.filter(p => p.category === catFilter);
+            if (stockFilter === 'in-stock') filtered = filtered.filter(p => p.quantity > 10);
+            if (stockFilter === 'low-stock') filtered = filtered.filter(p => p.quantity > 0 && p.quantity <= 10);
+            if (stockFilter === 'out') filtered = filtered.filter(p => p.quantity === 0);
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-box-open"></i><h3>Товары не найдены</h3><p>Добавьте первый товар, чтобы начать работу</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(p => {
+                const status = p.quantity === 0 ? '<span class="badge badge-danger">Нет в наличии</span>' : p.quantity <= 10 ? '<span class="badge badge-warning">Заканчивается</span>' : '<span class="badge badge-success">В наличии</span>';
+                const colorIdx = (p.id || 0) % colors.length;
+                const bg = colors[colorIdx];
+                const initial = p.name.charAt(0).toUpperCase();
+                return '<tr class="product-row"><td><div class="product-cell"><div class="product-avatar" style="background:' + bg + '">' + initial + '</div><div><div class="product-name">' + escHtml(p.name) + '</div><div class="product-sku">SKU-' + String(p.id || '').padStart(4, '0') + '</div></div></div></td><td>' + escHtml(p.category) + '</td><td>' + p.quantity + ' шт</td><td>' + formatPrice(p.price) + '</td><td>' + status + '</td><td><div class="actions-cell"><button class="btn btn-secondary btn-sm" onclick="editProduct(' + p.id + ')"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="deleteProduct(' + p.id + ')"><i class="fas fa-trash"></i></button></div></td></tr>';
+            }).join('');
+        }
+
+        function openProductModal(id) {
+            document.getElementById('productModal').classList.add('active');
+            document.getElementById('modalTitle').textContent = id ? 'Редактировать товар' : 'Добавить товар';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            if (id) {
+                const p = products.find(x => x.id === id);
+                if (p) {
+                    document.getElementById('productId').value = p.id;
+                    document.getElementById('productName').value = p.name;
+                    document.getElementById('productCategory').value = p.category;
+                    document.getElementById('productQuantity').value = p.quantity;
+                    document.getElementById('productPrice').value = p.price;
+                    document.getElementById('productCell').value = p.cell || '';
+                    document.getElementById('productDesc').value = p.description || '';
+                }
+            }
+        }
+
+        function closeModal() { document.getElementById('productModal').classList.remove('active'); }
+
+        async function handleProductSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const name = document.getElementById('productName').value.trim();
+            const category = document.getElementById('productCategory').value;
+            const quantity = parseInt(document.getElementById('productQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('productPrice').value) || 0;
+            const cell = document.getElementById('productCell').value.trim();
+            const description = document.getElementById('productDesc').value.trim();
+            if (!name || !category) { notify('Заполните обязательные поля', 'error'); return; }
+            try {
+                if (id) {
+                    await apiCall('/products/' + id, 'PUT', { name, category, quantity, price, cell, description });
+                    notify('Товар обновлён', 'success');
+                } else {
+                    const newP = await apiCall('/products', 'POST', { name, category, quantity, price, cell, description });
+                    products.unshift(newP);
+                    notify('Товар добавлен', 'success');
+                }
+                products = await apiCall('/products');
+                activities = await apiCall('/activities');
+                closeModal();
+                navigateTo('products');
+            } catch (err) { notify(err.message, 'error'); }
+        }
+
+        document.getElementById('productForm').addEventListener('submit', handleProductSubmit);
+
+        function editProduct(id) { openProductModal(id); }
+
+        async function deleteProduct(id) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            if (!confirm('Удалить "' + p.name + '"?')) return;
+            try {
+                await apiCall('/products/' + id, 'DELETE');
+                products = products.filter(x => x.id !== id);
+                activities = await apiCall('/activities');
+                filterProducts();
+                notify('Товар удалён', 'info');
+            } catch (err) { notify(err.message, 'error'); }
+        }
+
+        function renderWarehouse() {
+            const container = document.getElementById('warehousePage');
+            const shelves = [];
+            const rows = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let r = 0; r < 4; r++) {
+                for (let c = 1; c <= 12; c++) {
+                    const cell = rows[r] + '-' + String(c).padStart(2, '0');
+                    const prods = products.filter(p => p.cell === cell);
+                    const qty = prods.reduce((sum, p) => sum + p.quantity, 0);
+                    let status = 'empty';
+                    if (qty > 50) status = 'high'; else if (qty > 10) status = 'medium'; else if (qty > 0) status = 'low';
+                    shelves.push({ cell, qty, status });
+                }
+            }
+            let html = '<div class="card"><div class="card-header"><h3 class="card-title">Карта склада</h3><span class="badge badge-success">' + products.length + ' товаров</span></div><div class="warehouse-visual">';
+            shelves.forEach(s => { html += '<div class="shelf ' + s.status + '" title="' + s.cell + ': ' + s.qty + ' шт">' + s.cell + '</div>'; });
+            html += '</div></div>';
+            html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px"><div style="background:#fff;border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px"><div style="width:20px;height:20px;border-radius:4px;background:rgba(16,185,129,0.2);border:2px solid rgba(16,185,129,0.3)"></div><span style="font-size:13px">Более 50 шт</span></div><div style="background:#fff;border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px"><div style="width:20px;height:20px;border-radius:4px;background:rgba(245,158,11,0.2);border:2px solid rgba(245,158,11,0.3)"></div><span style="font-size:13px">11-50 шт</span></div><div style="background:#fff;border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px"><div style="width:20px;height:20px;border-radius:4px;background:rgba(239,68,68,0.2);border:2px solid rgba(239,68,68,0.3)"></div><span style="font-size:13px">1-10 шт</span></div><div style="background:#fff;border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px"><div style="width:20px;height:20px;border-radius:4px;background:rgba(156,163,175,0.15);border:2px solid rgba(156,163,175,0.2)"></div><span style="font-size:13px">Пусто</span></div></div>';
+            container.innerHTML = html;
+        }
+
+        function renderAnalytics() {
+            const container = document.getElementById('analyticsPage');
+            const catData = {};
+            products.forEach(p => {
+                if (!catData[p.category]) catData[p.category] = { count: 0, qty: 0, value: 0 };
+                catData[p.category].count++;
+                catData[p.category].qty += p.quantity;
+                catData[p.category].value += p.quantity * p.price;
+            });
+            const maxQty = Math.max(...Object.values(catData).map(c => c.qty), 1);
+            const barColors = ['#4facfe', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+            let chartHtml = '';
+            let i = 0;
+            for (const [cat, data] of Object.entries(catData)) {
+                const h = (data.qty / maxQty) * 160;
+                chartHtml += '<div class="bar-item"><div class="bar-value">' + data.qty + '</div><div class="bar" style="height:' + h + 'px;background:' + barColors[i % barColors.length] + ';cursor:pointer" title="' + cat + '"></div><div class="bar-label">' + cat + '</div></div>';
+                i++;
+            }
+            container.innerHTML = '<div class="stats-grid"><div class="stat-card"><div class="stat-header"><div class="stat-icon blue"><i class="fas fa-box"></i></div></div><div class="stat-value">' + products.length + '</div><div class="stat-label">Уникальных товаров</div></div><div class="stat-card"><div class="stat-header"><div class="stat-icon green"><i class="fas fa-cubes"></i></div></div><div class="stat-value">' + products.reduce((s, p) => s + p.quantity, 0) + '</div><div class="stat-label">Общее количество</div></div><div class="stat-card"><div class="stat-header"><div class="stat-icon orange"><i class="fas fa-ruble-sign"></i></div></div><div class="stat-value">' + formatPrice(products.reduce((s, p) => s + p.quantity * p.price, 0)) + '</div><div class="stat-label">Стоимость склада</div></div><div class="stat-card"><div class="stat-header"><div class="stat-icon red"><i class="fas fa-chart-bar"></i></div></div><div class="stat-value">' + Object.keys(catData).length + '</div><div class="stat-label">Категорий</div></div></div><div class="card"><div class="card-header"><h3 class="card-title">Товары по категориям</h3></div><div class="bar-chart">' + (chartHtml || '<div style="text-align:center;color:#9ca3af;width:100%">Нет данных</div>') + '</div></div>';
+        }
+
+        function renderProfile() {
+            const container = document.getElementById('profilePage');
+            const initial = currentUser.name.charAt(0).toUpperCase();
+            const totalProducts = products.length;
+            const totalValue = products.reduce((s, p) => s + p.quantity * p.price, 0);
+            const regDate = new Date(currentUser.created).toLocaleDateString('ru-RU');
+            container.innerHTML = '<div class="profile-card"><div class="profile-header"><div class="profile-avatar">' + initial + '</div><div><div class="profile-name">' + escHtml(currentUser.name) + '</div><div class="profile-email">' + escHtml(currentUser.email) + '</div></div></div><div class="profile-stats"><div class="profile-stat"><div class="profile-stat-value" style="color:#4facfe">' + totalProducts + '</div><div class="profile-stat-label">Товаров</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:#10b981">' + formatPrice(totalValue) + '</div><div class="profile-stat-label">Стоимость</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:#f59e0b">' + activities.length + '</div><div class="profile-stat-label">Действий</div></div></div></div><div class="profile-card"><h3 style="margin-bottom:20px">Настройки аккаунта</h3><form id="profileForm"><div class="form-group"><label class="form-label">Имя</label><input type="text" id="profileName" class="form-input" value="' + escHtml(currentUser.name) + '"></div><div class="form-group"><label class="form-label">Email</label><input type="email" id="profileEmail" class="form-input" value="' + escHtml(currentUser.email) + '" disabled style="opacity:0.6"></div><div class="form-row"><div class="form-group"><label class="form-label">Новый пароль</label><input type="password" id="profileNewPass" class="form-input" placeholder="Оставьте пустым"></div><div class="form-group"><label class="form-label">Дата регистрации</label><input type="text" class="form-input" value="' + regDate + '" disabled style="opacity:0.6"></div></div><button type="submit" class="btn btn-primary">Сохранить изменения</button></form></div>';
+            document.getElementById('profileForm').addEventListener('submit', async e => {
+                e.preventDefault();
+                const newName = document.getElementById('profileName').value.trim();
+                const newPass = document.getElementById('profileNewPass').value;
+                if (!newName || newName.length < 2) { notify('Имя слишком короткое', 'error'); return; }
+                try {
+                    await apiCall('/profile', 'PUT', { name: newName, password: newPass || undefined });
+                    currentUser.name = newName;
+                    token = localStorage.getItem('skladpro_token');
+                    const newPayload = JSON.parse(atob(token.split('.')[1]));
+                    newPayload.name = newName;
+                    token = jwtEncodeHack(newPayload);
+                    localStorage.setItem('skladpro_token', token);
+                    updateUserUI();
+                    notify('Профиль обновлён', 'success');
+                } catch (err) { notify(err.message, 'error'); }
+            });
+        }
+
+        function jwtEncodeHack(payload) {
+            const b64 = btoa(JSON.stringify(payload)).replace(/=/g, '');
+            return token.split('.')[0] + '.' + b64 + '.' + token.split('.')[2];
+        }
+
+        function formatPrice(val) { return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(val); }
+
+        function timeAgo(dateStr) {
+            const now = new Date(); const date = new Date(dateStr); const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'только что'; if (diff < 3600) return Math.floor(diff / 60) + ' мин назад'; if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад'; if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад'; return date.toLocaleDateString('ru-RU');
+        }
+
+        function escHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+
+        init();
+    </script>
+</body>
+</html>
