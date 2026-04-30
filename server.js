@@ -7,8 +7,11 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET;
-const DB_PATH = path.join(__dirname, 'skladpro.db');
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_change_in_production';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const DB_PATH = process.env.NODE_ENV === 'production' 
+  ? '/tmp/skladpro.db' 
+  : path.join(__dirname, 'skladpro.db');
 
 app.use(cors());
 app.use(express.json());
@@ -125,4 +128,6 @@ app.put('/api/profile', authenticate, (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT} in ${NODE_ENV} mode`);
+});
